@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras import layers
 
+#specpse
 try:
     from google.colab import drive
     drive.mount('/content/drive', force_remount=True)
