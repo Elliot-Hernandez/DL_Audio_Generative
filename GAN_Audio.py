@@ -5,6 +5,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from tensorflow.keras import layers
 
+#esto esta bien chiptuldofdfdffasdfadfdfdsfgfggfgfgfgf
+#bil bil bilasdfadsf 
 try:
     from google.colab import drive
     drive.mount('/content/drive', force_remount=True)
