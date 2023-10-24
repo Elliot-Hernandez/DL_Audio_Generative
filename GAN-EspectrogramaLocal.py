@@ -3,17 +3,6 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras import layers
 
-#specpseasdf asdf
-try:
-    from google.colab import drive
-    drive.mount('/content/drive', force_remount=True)
-    COLAB = True
-    print("Note: using Google CoLab")
-    %tensorflow_version 2.x
-except:
-    print("Note: not using Google CoLab")
-    COLAB = False
-
 # Set random seed for reproducibility
 tf.random.set_seed(42)
 
@@ -26,12 +15,12 @@ generator = tf.keras.Sequential([
     layers.Dense(512, activation='relu'),
     layers.BatchNormalization(),
     #layers.Dense(784, activation='tanh'),
-    layers.Dense(124416, activation='tanh'),
-    layers.Reshape((288, 432, 1))
+    layers.Dense(640*480, activation='tanh'),
+    layers.Reshape((640, 480, 1))
 ])
 
 discriminator = tf.keras.Sequential([
-    layers.Flatten(input_shape=(288, 432, 1)),
+    layers.Flatten(input_shape=(640, 480, 1)),
     layers.Dense(512, activation='relu'),
     layers.Dense(256, activation='relu'),
     layers.Dense(1, activation='sigmoid')
@@ -52,9 +41,10 @@ gan.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0002),
 
 # Load and preprocess dataset
 dataset = tf.keras.preprocessing.image_dataset_from_directory(
-    '/content/drive/MyDrive/data/',
+    'specs/',
     #image_size=(28, 28),
-    image_size=(288, 432),
+    label_mode=None,
+    image_size=(640, 480),
     batch_size=20,
     shuffle=True,
     color_mode='rgb'
@@ -62,7 +52,7 @@ dataset = tf.keras.preprocessing.image_dataset_from_directory(
 
 # Preprocess and normalize dataset
 #dataset = dataset.map(lambda x, _: (x / 255.0) * 2 - 1)
-dataset = dataset.map(lambda x, _: (tf.image.rgb_to_grayscale(x) / 255.0) * 2 - 1)
+dataset = dataset.map(lambda x: (tf.image.rgb_to_grayscale(x) / 255.0) * 2 - 1)
 print(dataset)
 
 
@@ -96,19 +86,10 @@ for epoch in range(epochs):
     print(f"Generator Loss: {generator_loss}")
 
     # Generate and save sample images
-    if epoch % 10 == 0:
+    if epoch % 2 == 0:
         print("Image saved")
-        random_latent_vectors = tf.random.normal(shape=(2, latent_dim))
+        random_latent_vectors = tf.random.normal(shape=(1, latent_dim))
         generated_images = generator.predict(random_latent_vectors)
-
-        """fig = plt.plot(generated_images)
-        plt.savefig(f"/content/drive/MyDrive/data/generated_images_epoch_{epoch}.png")
-        plt.close(fig)
-        """
-        fig, axes = plt.subplots(1, 2, figsize=(20, 4))
-        for i, image in enumerate(generated_images):
-            #print(i, image)
-            axes[i].imshow(image.reshape((288, 432)), cmap='gray')
-            axes[i].axis('off')
-        plt.savefig(f"/content/drive/MyDrive/data/generated_images_epoch_{epoch}.png")
-        plt.close(fig)
+        plt.imshow(generated_images[0].reshape((640, 480)),cmap='gray');
+        plt.savefig(f"spec_generate/spec_{epoch}.png")
+        plt.close()
