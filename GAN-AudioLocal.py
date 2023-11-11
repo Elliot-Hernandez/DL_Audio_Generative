@@ -91,37 +91,43 @@ print(datasetSpectrums)
 # Training loop
 epochs = 1000
 batch_size = 20
-
-for epoch in range(epochs):
-    print(f"Epoch {epoch+1}/{epochs}")
-    for real_images in dataset:
-        # Train discriminator
-        random_latent_vectors = tf.random.normal(shape=(batch_size, latent_dim))
-        #print(f"Random Latent Vectors {random_latent_vectors.shape}")
-        generated_images = generator.predict(random_latent_vectors)
-        #print(f"Generated Images  {generated_images.shape}")
-        combined_images = tf.concat([real_images, generated_images], axis=0)
-        #combined_images = tf.stack(combined_images)
-        #print(f"Combined Images {combined_images.shape}")
-        labels = tf.concat([tf.ones((batch_size, 1)), tf.zeros((batch_size, 1))], axis=0)
-        #labels = tf.stack(labels)
-        #print(f"Labels {labels.shape}")
-        discriminator_loss = discriminator.train_on_batch(combined_images, labels)
-
-        # Train generator
-        random_latent_vectors = tf.random.normal(shape=(batch_size, latent_dim))
-        misleading_labels = tf.ones((batch_size, 1))
-        generator_loss = gan.train_on_batch(random_latent_vectors, misleading_labels)
-
-    # Print progress
-    print(f"Discriminator Loss: {discriminator_loss[0]} | Discriminator Accuracy: {discriminator_loss[1]}")
-    print(f"Generator Loss: {generator_loss}")
-
-    # Generate and save sample images
-    if epoch % 2 == 0:
-        print("Image saved")
-        random_latent_vectors = tf.random.normal(shape=(1, latent_dim))
-        generated_images = generator.predict(random_latent_vectors)
-        plt.imshow(generated_images[0].reshape((640, 480)),cmap='gray');
-        plt.savefig(f"spec_generate/spec_{epoch}.png")
-        plt.close()
+print("imagen")
+for real_images in dataset:
+    print(real_images)
+print("audio**************************")
+for real_audios in datasetSpectrums:
+    print(real_audios)
+#
+# for epoch in range(epochs):
+#     print(f"Epoch {epoch+1}/{epochs}")
+#     for real_images in datasetSpectrums:
+#         # Train discriminator
+#         random_latent_vectors = tf.random.normal(shape=(batch_size, latent_dim))
+#         #print(f"Random Latent Vectors {random_latent_vectors.shape}")
+#         generated_images = generator.predict(random_latent_vectors)
+#         #print(f"Generated Images  {generated_images.shape}")
+#         combined_images = tf.concat([real_images, generated_images], axis=0)
+#         #combined_images = tf.stack(combined_images)
+#         #print(f"Combined Images {combined_images.shape}")
+#         labels = tf.concat([tf.ones((batch_size, 1)), tf.zeros((batch_size, 1))], axis=0)
+#         #labels = tf.stack(labels)
+#         #print(f"Labels {labels.shape}")
+#         discriminator_loss = discriminator.train_on_batch(combined_images, labels)
+#
+#         # Train generator
+#         random_latent_vectors = tf.random.normal(shape=(batch_size, latent_dim))
+#         misleading_labels = tf.ones((batch_size, 1))
+#         generator_loss = gan.train_on_batch(random_latent_vectors, misleading_labels)
+#
+#     # Print progress
+#     print(f"Discriminator Loss: {discriminator_loss[0]} | Discriminator Accuracy: {discriminator_loss[1]}")
+#     print(f"Generator Loss: {generator_loss}")
+#
+#     # Generate and save sample images
+#     if epoch % 2 == 0:
+#         print("Image saved")
+#         random_latent_vectors = tf.random.normal(shape=(1, latent_dim))
+#         generated_images = generator.predict(random_latent_vectors)
+#         plt.imshow(generated_images[0].reshape((640, 480)),cmap='gray');
+#         plt.savefig(f"spec_generate/spec_{epoch}.png")
+#         plt.close()
