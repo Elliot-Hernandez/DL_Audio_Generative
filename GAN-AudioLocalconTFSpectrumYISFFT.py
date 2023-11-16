@@ -42,14 +42,6 @@ datasetAudio = tf.keras.utils.audio_dataset_from_directory(
 print("datasetAudio")
 print(datasetAudio)
 
-print("\n\n\n**********************\n\n\n")
-audioMuestra, sr = librosa.load('audios/SC_230614_164449.wav')
-S = np.abs(librosa.stft(audioMuestra, n_fft=frame_length, win_length=frame_step))
-print(S.shape)
-print(S)
-print("\n\n\n**********************\n\n\n")
-
-
 
 def squeeze(audio):
   audio = tf.squeeze(audio, axis=-1)
@@ -66,11 +58,11 @@ def get_spectrogram(waveform):
   spectrogram = tf.signal.stft(
       waveform, frame_length=frame_length, frame_step=frame_step)
   # Obtain the magnitude of the STFT.
-  spectrogram = tf.abs(spectrogram)
+  #spectrogram = tf.abs(spectrogram)
   # Add a `channels` dimension, so that the spectrogram can be used
   # as image-like input data with convolution layers (which expect
   # shape (`batch_size`, `height`, `width`, `channels`).
-  spectrogram = spectrogram[..., tf.newaxis]
+  #spectrogram = spectrogram[..., tf.newaxis]
   return spectrogram
 
 def make_spec_ds(ds):
@@ -91,35 +83,6 @@ for example_spectrograms in datasetSpectrums.take(1):
 input_shape = example_spectrograms.shape[1:]
 print('Input shape:', input_shape)
 
-
-
-
-####EJEMPLO
-# Instantiate the `tf.keras.layers.Normalization` layer.
-norm_layer = layers.Normalization()
-# Fit the state of the layer to the spectrograms
-# with `Normalization.adapt`.
-norm_layer.adapt(data=datasetSpectrums.map(map_func=lambda spec: spec))
-
-model = models.Sequential([
-    layers.Input(shape=input_shape),
-    # Downsample the input.
-    layers.Resizing(32, 32),
-    # Normalize.
-    norm_layer,
-    layers.Conv2D(32, 3, activation='relu'),
-    layers.Conv2D(64, 3, activation='relu'),
-    layers.MaxPooling2D(),
-    layers.Dropout(0.25),
-    layers.Flatten(),
-    layers.Dense(128, activation='relu'),
-    layers.Dropout(0.5),
-    #layers.Dense(num_labels),
-])
-
-model.summary()
-####TERMINA EJEMPLO
-
 # Set random seed for reproducibility
 tf.random.set_seed(42)
 
@@ -133,13 +96,16 @@ generator = tf.keras.Sequential([
     layers.BatchNormalization(),
     #layers.Dense(784, activation='tanh'),
     layers.Dense(688*129, activation='tanh'),
-    layers.Reshape((688,129,1))
+    #layers.Reshape((688,129))
+    #layers.Reshape(shape=input_shape)
+
 ])
 
 generator.summary()
 
 discriminator = tf.keras.Sequential([
-    layers.Flatten(input_shape=(688,129,1)),
+    layers.Input(shape=input_shape),
+    #layers.Flatten(input_shape=(688,129)),
     layers.Dense(512, activation='relu'),
     layers.Dense(256, activation='relu'),
     layers.Dense(1, activation='sigmoid')
@@ -161,7 +127,7 @@ gan.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0002),
             loss=tf.keras.losses.BinaryCrossentropy())
 
 for epoch in range(epochs):
-    #print(f"Epoch {epoch+1}/{epochs}")
+    print(f"Epoch {epoch+1}/{epochs}")
     for real_images in datasetSpectrums:
         # Train discriminator
         random_latent_vectors = tf.random.normal(shape=(batch_size, latent_dim))
@@ -182,19 +148,20 @@ for epoch in range(epochs):
         generator_loss = gan.train_on_batch(random_latent_vectors, misleading_labels)
 
     # Print progress
-    #print(f"Discriminator Loss: {discriminator_loss[0]} | Discriminator Accuracy: {discriminator_loss[1]}")
-    #print(f"Generator Loss: {generator_loss}")
+    print(f"Discriminator Loss: {discriminator_loss[0]} | Discriminator Accuracy: {discriminator_loss[1]}")
+    print(f"Generator Loss: {generator_loss}")
 
     # Generate and save sample images
     if epoch % 2 == 0:
         print("Spectrograma generado nos ganamos una chelita saved")
         random_latent_vectors = tf.random.normal(shape=(1, latent_dim))
         generated_spectrum = generator.predict(random_latent_vectors)
-        print("\n\n\n**********************\n\n\n")
-        print(generated_spectrum.shape)
         print(generated_spectrum)
-        #transformar generated_spectrum para que sea de (a,b) ej (688,129)
-        #griffinlim aqui poner los argumentos de los tamaños adecaudos
-        #audio_signal = librosa.griffinlim(generated_spectrum)
-
+        inverse_stft = tf.signal.inverse_stft(
+            generated_spectrum, frame_length, frame_step,
+            window_fn=tf.signal.inverse_stft_window_fn(frame_step))
+        ssound = tf.audio.encode_wav(inverse_stft,44100)
+        #f = open("demofile2.wav", "wb")
+        #f.write(ssound)
+        #f.close()
 

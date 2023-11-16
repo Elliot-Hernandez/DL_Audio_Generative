@@ -42,14 +42,6 @@ datasetAudio = tf.keras.utils.audio_dataset_from_directory(
 print("datasetAudio")
 print(datasetAudio)
 
-print("\n\n\n**********************\n\n\n")
-audioMuestra, sr = librosa.load('audios/SC_230614_164449.wav')
-S = np.abs(librosa.stft(audioMuestra, n_fft=frame_length, win_length=frame_step))
-print(S.shape)
-print(S)
-print("\n\n\n**********************\n\n\n")
-
-
 
 def squeeze(audio):
   audio = tf.squeeze(audio, axis=-1)
@@ -63,14 +55,13 @@ datasetAudio = datasetAudio.map(squeeze, tf.data.AUTOTUNE)
 
 def get_spectrogram(waveform):
   # Convert the waveform to a spectrogram via a STFT.
-  spectrogram = tf.signal.stft(
-      waveform, frame_length=frame_length, frame_step=frame_step)
-  # Obtain the magnitude of the STFT.
+  spectrogram = tf.signal.stft(waveform, frame_length=frame_length, frame_step=frame_step)
   spectrogram = tf.abs(spectrogram)
-  # Add a `channels` dimension, so that the spectrogram can be used
-  # as image-like input data with convolution layers (which expect
-  # shape (`batch_size`, `height`, `width`, `channels`).
   spectrogram = spectrogram[..., tf.newaxis]
+  # Obtain the magnitude of the STFT.
+ # print(waveform)
+  #spectrogram = np.abs(librosa.stft(tf.make_ndarray(waveform)))
+ # spectrogram = spectrogram[..., tf.newaxis]
   return spectrogram
 
 def make_spec_ds(ds):
@@ -161,7 +152,7 @@ gan.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0002),
             loss=tf.keras.losses.BinaryCrossentropy())
 
 for epoch in range(epochs):
-    #print(f"Epoch {epoch+1}/{epochs}")
+    print(f"Epoch {epoch+1}/{epochs}")
     for real_images in datasetSpectrums:
         # Train discriminator
         random_latent_vectors = tf.random.normal(shape=(batch_size, latent_dim))
@@ -182,19 +173,22 @@ for epoch in range(epochs):
         generator_loss = gan.train_on_batch(random_latent_vectors, misleading_labels)
 
     # Print progress
-    #print(f"Discriminator Loss: {discriminator_loss[0]} | Discriminator Accuracy: {discriminator_loss[1]}")
-    #print(f"Generator Loss: {generator_loss}")
+    print(f"Discriminator Loss: {discriminator_loss[0]} | Discriminator Accuracy: {discriminator_loss[1]}")
+    print(f"Generator Loss: {generator_loss}")
 
     # Generate and save sample images
     if epoch % 2 == 0:
         print("Spectrograma generado nos ganamos una chelita saved")
         random_latent_vectors = tf.random.normal(shape=(1, latent_dim))
         generated_spectrum = generator.predict(random_latent_vectors)
-        print("\n\n\n**********************\n\n\n")
-        print(generated_spectrum.shape)
         print(generated_spectrum)
-        #transformar generated_spectrum para que sea de (a,b) ej (688,129)
-        #griffinlim aqui poner los argumentos de los tamaños adecaudos
-        #audio_signal = librosa.griffinlim(generated_spectrum)
+        #convertir el arrelgo generated_spectrum a complex64
 
+        #inverse_stft = tf.signal.inverse_stft(
+        #    generated_spectrum, frame_length, frame_step,
+        #    window_fn=tf.signal.inverse_stft_window_fn(frame_step))
+        #ssound = tf.audio.encode_wav(inverse_stft,44100)
+        #f = open("demofile2.wav", "wb")
+        #f.write(ssound)
+        #f.close()
 
