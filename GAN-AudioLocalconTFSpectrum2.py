@@ -45,11 +45,10 @@ print(datasetAudio)
 print("\n\n\n**********************\n\n\n")
 audioMuestra, sr = librosa.load('audios/SC_230614_164449.wav')
 S = np.abs(librosa.stft(audioMuestra, n_fft=frame_length, win_length=frame_step))
+print(type(S))
 print(S.shape)
 print(S)
 print("\n\n\n**********************\n\n\n")
-
-
 
 def squeeze(audio):
   audio = tf.squeeze(audio, axis=-1)
@@ -91,35 +90,6 @@ for example_spectrograms in datasetSpectrums.take(1):
 input_shape = example_spectrograms.shape[1:]
 print('Input shape:', input_shape)
 
-
-
-
-####EJEMPLO
-# Instantiate the `tf.keras.layers.Normalization` layer.
-norm_layer = layers.Normalization()
-# Fit the state of the layer to the spectrograms
-# with `Normalization.adapt`.
-norm_layer.adapt(data=datasetSpectrums.map(map_func=lambda spec: spec))
-
-model = models.Sequential([
-    layers.Input(shape=input_shape),
-    # Downsample the input.
-    layers.Resizing(32, 32),
-    # Normalize.
-    norm_layer,
-    layers.Conv2D(32, 3, activation='relu'),
-    layers.Conv2D(64, 3, activation='relu'),
-    layers.MaxPooling2D(),
-    layers.Dropout(0.25),
-    layers.Flatten(),
-    layers.Dense(128, activation='relu'),
-    layers.Dropout(0.5),
-    #layers.Dense(num_labels),
-])
-
-model.summary()
-####TERMINA EJEMPLO
-
 # Set random seed for reproducibility
 tf.random.set_seed(42)
 
@@ -160,6 +130,7 @@ gan = tf.keras.Model(gan_input, gan_output)
 gan.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0002),
             loss=tf.keras.losses.BinaryCrossentropy())
 
+counter = 0
 for epoch in range(epochs):
     #print(f"Epoch {epoch+1}/{epochs}")
     for real_images in datasetSpectrums:
@@ -186,15 +157,20 @@ for epoch in range(epochs):
     #print(f"Generator Loss: {generator_loss}")
 
     # Generate and save sample images
-    #if epoch % 2 == 0:
-    print("Spectrograma generado nos ganamos una chelita saved")
-    random_latent_vectors = tf.random.normal(shape=(1, latent_dim))
-    generated_spectrum = generator.predict(random_latent_vectors)
-    generated_spectrum = tf.squeeze(generated_spectrum, axis=[0,3])
-    print("\n\n\n**********************\n\n\n")
-    print(generated_spectrum.shape)
-    print(generated_spectrum)
-    #griffinlim aqui poner los argumentos de los tamaños adecaudos
-    audio_signal = librosa.griffinlim(tf.make_ndarray(generated_spectrum))
-
+    if epoch % 2 == 0:
+        print("Spectrograma generado nos ganamos una chelita saved")
+        random_latent_vectors = tf.random.normal(shape=(1, latent_dim))
+        generated_spectrum = generator.predict(random_latent_vectors)
+        generated_spectrum = tf.squeeze(generated_spectrum, axis=[0,3])
+        #generated_spectrum = tf.make_ndarray(generated_spectrum)
+        #print(generated_spectrum)
+        #griffinlim aqui poner los argumentos de los tamaños adecaudos
+        generated_spectrum = tf.make_tensor_proto(generated_spectrum)
+        generated_spectrum = tf.make_ndarray(generated_spectrum)
+        print("\n\n\n**********************\n\n\n")
+        print(generated_spectrum.shape)
+        print(generated_spectrum)
+        audio_signal = librosa.griffinlim(generated_spectrum)
+        librosa.write_wav("audios_generated/" + str(counter) + ".wav", audio_signal, 4400)
+        counter = counter + 1
 
